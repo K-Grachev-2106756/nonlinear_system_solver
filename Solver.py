@@ -42,13 +42,19 @@ class Solver:
             iter = 0
             while error_last > eps and iter < 1000:
                 iter += 1
-                values = np.array([values[i] - wsystem[i](values) for i in range(n)]) # Calculating new values at i-step
-                error_cur = Solver.__max_error(system, values) 
-                if (error_cur > error_last) or (error_cur >= np.inf) or (None in values):
+                new_values = np.array([round(values[i] - wsystem[i](values), 5) for i in range(n)]) # Calculating new values at i-step
+                if any(new_values[np.isnan(new_values)]) or any(new_values[np.isinf(new_values)]):
+                    new_values = values - np.random.rand(n)
+                error_cur = Solver.__max_error(system, new_values) 
+                if (error_cur == np.inf) or (None in new_values) or (np.inf in new_values) or np.any(new_values[abs(new_values) > 1e10]):
+                    break
+                elif (max(np.absolute(new_values - values)) < eps):
+                    values = new_values
                     break
                 elif error_cur < min_error:
-                    answer, min_error = deepcopy((values, error_cur))
+                    answer, min_error = deepcopy((new_values, error_cur))
                 error_last = error_cur
+                values = new_values
 
             if len(answer):
                 return answer, min_error
@@ -66,7 +72,7 @@ class Solver:
         min_error = np.inf   
         for step_rate in [0.025, 0.05, 0.1]: # Attempts to find the optimal starting point
             start_rate = step_rate
-            start = np.zeros((n, )) + eps
+            start = np.ones((n, )) + eps
             for i in range(5000): 
                 if not i % 20:
                     step_rate += (start_rate - (start_rate / 5) * (i // 1000))  
