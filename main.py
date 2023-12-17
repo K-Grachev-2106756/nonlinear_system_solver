@@ -6,4 +6,4 @@ system = [
     lambda x, y, z: z ** 2 + y / x + 2
 ]
 
-print(Jacobi.solve(system))
+print(Solver.Jacobi(system))

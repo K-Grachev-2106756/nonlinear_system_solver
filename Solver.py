@@ -4,12 +4,23 @@ from copy import deepcopy
 
 
 
-class Jacobi:
+class Solver:
     def __init__():
         pass
 
-    @staticmethod
-    def solve(system: list, values=None, eps=1e-7) -> (list, float):
+    @staticmethod # Metric
+    def __max_error(system: list, args: list) -> float:
+        return max([abs(lam(*args)) for lam in system])
+    
+    @staticmethod # For comfortable lambdas exploitation
+    def __wrapper(lambda_function) -> 'function':
+        def wrapped_function(args: list):
+            return lambda_function(*args)
+
+        return wrapped_function
+
+    @classmethod # The simple iteration method
+    def Jacobi(cls, system: list, values=None, eps=1e-7) -> (list, float):
         '''
             The simple iteration method (Jacobi method). 
             Example:
@@ -23,20 +34,8 @@ class Jacobi:
                 Output:
                     ([x1, x2, x3], max_error)
         '''
-    
-        # Metric
-        def max_error(system: list, args: list) -> float:
-            return max([abs(lam(*args)) for lam in system])
         
-        # For comfortable lambdas exploitation
-        def wrapper(lambda_function):
-            def wrapped_function(args: list):
-                return lambda_function(*args)
-    
-            return wrapped_function
-
-        # Method implementation
-        def epoch(values: np.ndarray):
+        def epoch(values: np.ndarray): # Method implementation
             answer = []
             min_error = np.inf
             error_last = np.inf
@@ -44,7 +43,7 @@ class Jacobi:
             while error_last > eps and iter < 1000:
                 iter += 1
                 values = np.array([values[i] - wsystem[i](values) for i in range(n)]) # Calculating new values at i-step
-                error_cur = max_error(system, values) 
+                error_cur = Solver.__max_error(system, values) 
                 if (error_cur > error_last) or (error_cur >= np.inf) or (None in values):
                     break
                 elif error_cur < min_error:
@@ -57,7 +56,7 @@ class Jacobi:
             return values, error_last
         
         n = len(system)
-        wsystem = [wrapper(lam) for lam in system]        
+        wsystem = [Solver.__wrapper(lam) for lam in system]        
         if values is not None: # The result for the proposed first approximation will be returned
             if not isinstance(values, np.ndarray): 
                 values = np.array(values)
@@ -65,7 +64,7 @@ class Jacobi:
 
         answer = []
         min_error = np.inf   
-        for step_rate in [0.025, 0.05, 0.1]:
+        for step_rate in [0.025, 0.05, 0.1]: # Attempts to find the optimal starting point
             start_rate = step_rate
             start = np.zeros((n, )) + eps
             for i in range(5000): 
