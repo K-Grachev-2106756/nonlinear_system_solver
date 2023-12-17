@@ -1,4 +1,6 @@
 import numpy as np
+import warnings
+warnings.simplefilter('ignore')
 
 
 
@@ -19,7 +21,7 @@ class Solver:
         return wrapped_function
 
     @classmethod # The simple iteration method
-    def Jacobi(cls, system: list, values=None, eps=1e-7) -> (list, float):
+    def Jacobi(cls, system: list, values=None, eps=1e-4) -> (list, float):
         '''
             The simple iteration method (Jacobi method). 
             Example:
@@ -41,11 +43,11 @@ class Solver:
             iter = 0
             while error_last > eps and iter < 1000:
                 iter += 1
-                new_values = np.array([round(values[i] - wsystem[i](values), 5) for i in range(n)]) # Calculating new values at i-step
-                if any(new_values == None) or any(new_values == np.inf): #Avoiding problems
-                    new_values = values - np.random.rand(n)
+                new_values = np.array([round(values[i] - wsystem[i](values) * 0.01, 5) for i in range(n)]) # Calculating new values at i-step
+                if any(np.isnan(new_values)) or any(np.isinf(new_values)) or np.any(new_values[abs(new_values) > 1e10]): # Avoiding problems
+                    break
                 error_cur = Solver.__max_error(system, new_values) 
-                if (error_cur == np.inf) or any(new_values == None) or any(new_values == np.inf) or np.any(new_values[abs(new_values) > 1e10]):
+                if error_cur == np.inf:
                     break
                 if error_cur < min_error:
                     answer, min_error = new_values, error_cur
@@ -68,10 +70,10 @@ class Solver:
 
         answer = []
         min_error = np.inf   
-        for step_rate in [0.025, 0.05, 0.1]: # Attempts to find the optimal starting point
+        for step_rate in [0.025, 0.1]: # Attempts to find the optimal starting point
             start_rate = step_rate
             start = np.ones((n, )) + eps
-            for i in range(5000): 
+            for i in range(1000): 
                 if not i % 20:
                     step_rate += (start_rate - (start_rate / 5) * (i // 1000))  
                 err = epoch(start)[1]
