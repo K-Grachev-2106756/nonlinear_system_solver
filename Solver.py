@@ -1,5 +1,4 @@
 import numpy as np
-from copy import deepcopy
 
 
 
@@ -43,16 +42,15 @@ class Solver:
             while error_last > eps and iter < 1000:
                 iter += 1
                 new_values = np.array([round(values[i] - wsystem[i](values), 5) for i in range(n)]) # Calculating new values at i-step
-                if any(new_values[np.isnan(new_values)]) or any(new_values[np.isinf(new_values)]):
+                if any(new_values == None) or any(new_values == np.inf): #Avoiding problems
                     new_values = values - np.random.rand(n)
                 error_cur = Solver.__max_error(system, new_values) 
-                if (error_cur == np.inf) or (None in new_values) or (np.inf in new_values) or np.any(new_values[abs(new_values) > 1e10]):
+                if (error_cur == np.inf) or any(new_values == None) or any(new_values == np.inf) or np.any(new_values[abs(new_values) > 1e10]):
                     break
-                elif (max(np.absolute(new_values - values)) < eps):
-                    values = new_values
+                if error_cur < min_error:
+                    answer, min_error = new_values, error_cur
+                if max(np.absolute(new_values - values)) < eps:
                     break
-                elif error_cur < min_error:
-                    answer, min_error = deepcopy((new_values, error_cur))
                 error_last = error_cur
                 values = new_values
 
@@ -88,7 +86,7 @@ class Solver:
                         if cur_err < eps:
                             return ans, cur_err
                         elif cur_err < min_error:
-                            answer, min_error = deepcopy((ans, cur_err))
+                            answer, min_error = ans, cur_err
                         if cur_err < err:
                             err = cur_err
                         else:
