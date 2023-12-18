@@ -22,7 +22,7 @@ class Solver:
         return wrapped_function
 
     @classmethod # The simple iteration method
-    def Jacobi(cls, system: list, values=None, eps=1e-4) -> (list, float):
+    def Jacobi(cls, system: list, values=None, alpha=0.01, eps=1e-4) -> (list, float):
         '''
             The simple iteration method (Jacobi method). 
             Example:
@@ -44,7 +44,7 @@ class Solver:
             iter = 0
             while error_last > eps and iter < 1000:
                 iter += 1
-                new_values = np.array([round(values[i] - wsystem[i](values) * 0.01, 5) for i in range(n)]) # Calculating new values at i-step
+                new_values = np.array([round(values[i] - wsystem[i](values) * alpha, 5) for i in range(n)]) # Calculating new values at i-step
                 if any(np.isnan(new_values)) or any(np.isinf(new_values)) or np.any(new_values[abs(new_values) > 1e10]): # Avoiding problems
                     break
                 error_cur = Solver.__max_error(system, new_values) 
@@ -102,10 +102,10 @@ class Solver:
 
         return answer, min_error
     
-    @classmethod # simple iteration method with forward substitution
-    def GaussSeidel(cls, system: list, values=None, alpha = 0.01, eps=1e-4) -> (list, float):
+    @classmethod # iteration method with forward substitution
+    def Seidel(cls, system: list, values=None, alpha=0.01, eps=1e-4) -> (list, float):
         '''
-            The simple iteration method (Jacobi method). 
+            Iteration method with forward substitution (Seidel method). 
             Example:
                 Input:
                     system = [
